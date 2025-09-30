@@ -11,6 +11,9 @@ async function createAdminUser() {
   user = await DB.addUser(user);
   return { ...user, password: 'toomanysecrets' };
 }
+let testFranchise;
+let testAdminUser;
+let token;
 beforeAll(async () => {
   testAdminUser = await createAdminUser();
   token = await login(testAdminUser);
