@@ -47,24 +47,30 @@ describe('GET /api/user', () => {
   });
 
   test('supports pagination metadata via more flag', async () => {
-    const userOne = await createUser({ domain: 'page-test.com' });
-    const userTwo = await createUser({ domain: 'page-test.com' });
+    const prefix = `page-${randomName()}`;
+    const userOne = await createUser({ name: `${prefix}-1`, domain: 'page-test.com' });
+    const userTwo = await createUser({ name: `${prefix}-2`, domain: 'page-test.com' });
 
     const firstPageRes = await request(app)
-      .get('/api/user?page=0&limit=1')
+      .get(`/api/user?page=0&limit=1&name=${prefix}*`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(firstPageRes.status).toBe(200);
     expect(firstPageRes.body.users).toHaveLength(1);
     expect(firstPageRes.body.more).toBe(true);
+    expect(firstPageRes.body.users[0].name.startsWith(prefix)).toBe(true);
 
     const secondPageRes = await request(app)
-      .get('/api/user?page=1&limit=1')
+      .get(`/api/user?page=1&limit=1&name=${prefix}*`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(secondPageRes.status).toBe(200);
     expect(secondPageRes.body.users).toHaveLength(1);
     expect(secondPageRes.body.more).toBe(false);
+    expect(secondPageRes.body.users[0].name.startsWith(prefix)).toBe(true);
+
+    const combinedNames = [...firstPageRes.body.users, ...secondPageRes.body.users].map((u) => u.name);
+    expect(combinedNames).toEqual(expect.arrayContaining([userOne.name, userTwo.name]));
   });
 
   test('applies wildcard name filtering', async () => {
@@ -156,9 +162,9 @@ function expectValidJwt(token) {
   expect(token).toBeDefined();
   expect(typeof token).toBe('string');
 }
-async function createUser({ password = 'toomanysecrets', roles = [{ role: Role.Diner }], domain = 'test.com' } = {}) {
+async function createUser({ password = 'toomanysecrets', roles = [{ role: Role.Diner }], domain = 'test.com', name } = {}) {
   const user = { password, roles };
-  user.name = randomName();
+  user.name = name ?? randomName();
   user.email = `${user.name}@${domain}`;
 
   const created = await DB.addUser(user);
