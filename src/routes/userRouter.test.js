@@ -25,6 +25,29 @@ afterAll(async () => {
     }
   }
 });
+describe('PUT /api/user/:userId', () => {
+  test('allows a user to update their own profile', async () => {
+    const selfUser = await createUser();
+    const selfToken = await login(selfUser);
+    
+    const updatedName = 'Updated Name';
+    const updateRes = await request(app)
+      .put(`/api/user/${selfUser.id}`)
+      .set('Authorization', `Bearer ${selfToken}`)
+      .send({ name: updatedName, email: selfUser.email, password: selfUser.password });
+    
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body).toHaveProperty('user');
+    expect(updateRes.body.user).toEqual(
+      expect.objectContaining({
+        id: selfUser.id,
+        name: updatedName,
+        email: selfUser.email,
+        roles: expect.any(Array),
+      })
+    );
+  });
+});
 
 describe('GET /api/user', () => {
   test('returns users when requester is admin', async () => {
