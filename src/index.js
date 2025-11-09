@@ -1,4 +1,5 @@
 const app = require('./service.js');
+require('./metricsGenerator.js');
 
 const port = process.argv[2] || 3000;
 app.listen(port, () => {
