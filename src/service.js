@@ -5,10 +5,56 @@ const franchiseRouter = require('./routes/franchiseRouter.js');
 const userRouter = require('./routes/userRouter.js');
 const version = require('./version.json');
 const config = require('./config.js');
+const metrics = require('./metrics.js');
 
 const app = express();
 app.use(express.json());
+
+// Metrics middleware - must be before setAuthUser to track all requests
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  
+  // Increment request counter
+  metrics.incrementRequest(req.method);
+  
+  // Override res.json and res.send to capture response
+  const originalJson = res.json.bind(res);
+  const originalSend = res.send.bind(res);
+  
+  const captureResponse = () => {
+    const latency = Date.now() - startTime;
+    
+    // Record latency for all requests
+    if (req.path.includes('/api/order') && req.method === 'POST') {
+      metrics.recordLatency('pizza', latency);
+    } else {
+      metrics.recordLatency('all', latency);
+    }
+  };
+  
+  res.json = function(data) {
+    captureResponse();
+    return originalJson(data);
+  };
+  
+  res.send = function(data) {
+    captureResponse();
+    return originalSend(data);
+  };
+  
+  next();
+});
+
 app.use(setAuthUser);
+
+// Track active users after authentication
+app.use((req, res, next) => {
+  if (req.user && req.user.id) {
+    metrics.trackActiveUser(req.user.id);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
