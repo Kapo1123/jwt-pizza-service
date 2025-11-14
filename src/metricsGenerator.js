@@ -1,9 +1,12 @@
 const config = require('./config');
 const metrics = require('./metrics');
 
+// Pull metrics-specific configuration while providing a safe fallback during tests
+const metricsConfig = config.metrics ?? {};
+
 console.log('Metrics generator loaded');
-console.log('Grafana URL:', config.url);
-console.log('API Key exists:', !!config.apiKey);
+console.log('Grafana URL:', metricsConfig.url);
+console.log('API Key exists:', !!metricsConfig.apiKey);
 
 // Send metrics to Grafana every 10 seconds
 setInterval(() => {
@@ -60,7 +63,7 @@ function sendMetricToGrafana(metricName, metricValue, type, unit) {
           attributes: [
             {
               key: 'service.name',
-              value: { stringValue: config.source },
+              value: { stringValue: metricsConfig.source },
             },
           ],
         },
@@ -89,11 +92,16 @@ function sendMetricToGrafana(metricName, metricValue, type, unit) {
   };
 
   const body = JSON.stringify(metric);
-  fetch(config.url, {
+  if (!metricsConfig.url || !metricsConfig.apiKey || !metricsConfig.source) {
+    console.warn(`Skipping ${metricName}: metrics configuration missing`);
+    return;
+  }
+
+  fetch(metricsConfig.url, {
     method: 'POST',
     body: body,
     headers: { 
-      Authorization: `Bearer ${config.apiKey}`, 
+      Authorization: `Bearer ${metricsConfig.apiKey}`, 
       'Content-Type': 'application/json' 
     },
   })

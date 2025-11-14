@@ -87,6 +87,7 @@ orderRouter.post(
     
     // Log factory request and response
     const orderInfo = { diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order };
+    console.log('Order Info:', orderInfo);
     logger.factoryLogger(orderInfo);
     
     const r = await fetch(`${config.factory.url}/api/order`, {

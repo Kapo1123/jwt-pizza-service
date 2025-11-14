@@ -7,7 +7,7 @@ let logger;
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
 
 if (config.logging && config.logging.url && !isTestEnvironment) {
-  logger = new Logger(config.logging);
+  logger = new Logger(config);
 } else {
   // Create a no-op logger for testing/development when config is not available
   logger = {
