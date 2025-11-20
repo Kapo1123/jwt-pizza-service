@@ -1,4 +1,4 @@
-import { sleep, check,group, fail } from 'k6'
+import { sleep, check, fail } from 'k6'
 import http from 'k6/http'
 import jsonpath from 'https://jslib.k6.io/jsonpath/1.0.2/index.js'
 
@@ -13,10 +13,10 @@ export const options = {
       executor: 'ramping-vus',
       gracefulStop: '30s',
       stages: [
-        { target: 5, duration: '30s' },   // Stage 1: Ramp up to 5 VUs over 30s
-        { target: 15, duration: '1m' },    // Stage 2: Ramp up to 15 VUs over 1 minute
-        { target: 10, duration: '30s' },   // Stage 3: Ramp down to 10 VUs over 30s
-        { target: 0, duration: '30s' },   // Stage 4: Ramp down to 0 VUs over 30s
+        { target: 5, duration: '30s' },   
+        { target: 15, duration: '1m' },    
+        { target: 10, duration: '30s' },   
+        { target: 0, duration: '30s' },   
       ],
       gracefulRampDown: '30s',
       exec: 'login_and_pizza_order',
@@ -131,8 +131,6 @@ export function login_and_pizza_order() {
 // Scenario: Scenario_2 (executor: ramping-vus)
 
 export function scenario_2() {
-  let response
-
   // Automatically added sleep
   sleep(1)
 }
